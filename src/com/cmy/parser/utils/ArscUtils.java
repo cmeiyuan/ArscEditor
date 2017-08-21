@@ -1,25 +1,11 @@
-package com.cmy.parser;
+package com.cmy.parser.utils;
 
 /**
  * Created by cmy on 2017/7/25
  */
 public class ArscUtils {
 
-    private static final boolean DEBUG = true;
     private static final int UTF8_FLAG = 1 << 8;
-
-    //如果第一个字节高位为0，直接返回第一个字节
-    //如果第一个字节高位为1，则将高为置为0，并和下一个字节拼接
-    private static int decodeUTF8Length(int b1, int b2) {
-        if (DEBUG) {
-            System.out.println("byte1:" + b1 + " byte2:" + b2);
-        }
-        int len = b1;
-        if ((len & 0x80) != 0) {
-            len = ((len & 0x7F) << 8) | b2;
-        }
-        return len;
-    }
 
     public static int[] getUtf8(byte[] array, int offset) {
         int val = array[offset];
@@ -59,6 +45,21 @@ public class ArscUtils {
 
     public static boolean isUTF8(int flags) {
         return (flags & UTF8_FLAG) != 0;
+    }
+
+    public static byte[] getUtf16String(String u8str, int size) {
+        byte[] str = new byte[size];
+        int N = Math.min(u8str.length(), size);
+        int i = 0;
+        int j = 0;
+        for (; i < N; i++) {
+            str[j++] = (byte) u8str.charAt(i);
+            str[j++] = 0;
+        }
+        for (; j < size; j++) {
+            str[j] = 0;
+        }
+        return str;
     }
 
     public static void main(String[] args) {

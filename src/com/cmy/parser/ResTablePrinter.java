@@ -32,7 +32,7 @@ public class ResTablePrinter {
 
         println("ResTablePackageHeader ", resTablePackage.packageHeader.resChunkHeader);
         println("ResTablePackageHeader packageId: ", resTablePackage.packageHeader.packageId);
-        println("ResTablePackageHeader packageName: " + resTablePackage.packageHeader.packageName);
+        println("ResTablePackageHeader packageName: " + new String(resTablePackage.packageHeader.packageName));
         println("ResTablePackageHeader typeStringOffset: ", resTablePackage.packageHeader.typeStringOffset);
         println("ResTablePackageHeader lastPublicType: ", resTablePackage.packageHeader.lastPublicType);
         println("ResTablePackageHeader keyStringOffset: ", resTablePackage.packageHeader.keyStringOffset);
@@ -42,18 +42,17 @@ public class ResTablePrinter {
         printResStringPool(resTablePackage.typeStringPool);
         printResStringPool(resTablePackage.keyStringPool);
 
-        List<ResTableData> list = resTablePackage.resTableDataList;
-        for (int i = 0; i < list.size(); i++) {
-            ResTableData resTableData = list.get(i);
+        List<ResTableChunk> list = resTablePackage.resTableChunkList;
+        for (ResTableChunk resTableData : list) {
             short type = resTableData.resChunkHeader.type;
             switch (type) {
-                case ArscParser.RES_TABLE_LIBRARY_TYPE:
+                case ArscReader.RES_TABLE_LIBRARY_TYPE:
                     //println("RES_TABLE_LIBRARY_TYPE");
                     break;
-                case ArscParser.RES_TABLE_TYPE_SPEC_TYPE:
+                case ArscReader.RES_TABLE_TYPE_SPEC_TYPE:
                     //println("RES_TABLE_TYPE_SPEC_TYPE");
                     break;
-                case ArscParser.RES_TABLE_TYPE_TYPE:
+                case ArscReader.RES_TABLE_TYPE_TYPE:
                     //println("RES_TABLE_TYPE_TYPE");
                     println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
                     break;
@@ -64,13 +63,13 @@ public class ResTablePrinter {
     public static void printResStringPool(ResStringPool resStringPool) {
         println("");
         println("############ 开始 打印字符串池############");
-        println("ResStringPool ", resStringPool.resChunkHeader);
-
-        println("ResStringPool stringCount: ", resStringPool.stringCount);
-        println("ResStringPool styleCount: ", resStringPool.styleCount);
-        println("ResStringPool flags: ", resStringPool.flags);
-        println("ResStringPool stringsStart: ", resStringPool.stringsStart);
-        println("ResStringPool stylesStart: ", resStringPool.stylesStart);
+        ResStringPool.ResStringPoolHeader resStringPoolHeader = resStringPool.resStringPoolHeader;
+        println("ResStringPool ", resStringPoolHeader.resChunkHeader);
+        println("ResStringPool stringCount: ", resStringPoolHeader.stringCount);
+        println("ResStringPool styleCount: ", resStringPoolHeader.styleCount);
+        println("ResStringPool flags: ", resStringPoolHeader.flags);
+        println("ResStringPool stringsStart: ", resStringPoolHeader.stringsStart);
+        println("ResStringPool stylesStart: ", resStringPoolHeader.stylesStart);
 
         println("=====字符串=====");
         println(resStringPool.strings);
@@ -91,7 +90,7 @@ public class ResTablePrinter {
                 println("ResTableEntry size: ", entry.size);
                 println("ResTableEntry flags: ", entry.flags);
                 println("ResTableEntry index: ", entry.index);
-                String keyName = keyStringPool.strings[entry.index];
+                String keyName = new String(keyStringPool.strings[entry.index]);
                 println("ResTableEntry keyName: " + keyName);
                 println("");
                 println(pp, resTableType.typeId, keyName, globalStringPool, entry.resValue);
@@ -105,7 +104,7 @@ public class ResTablePrinter {
                 println("ResTableEntry size: ", entry.size);
                 println("ResTableEntry flags: ", entry.flags);
                 println("ResTableEntry index: ", entry.index);
-                String keyName = keyStringPool.strings[entry.index];
+                String keyName = new String(keyStringPool.strings[entry.index]);
                 println("ResTableEntry keyName: " + keyName);
                 ResTableMapEntry valueMapEntry = (ResTableMapEntry) entry;
                 println("ResTableMapEntry parent: ", valueMapEntry.parent);
@@ -141,10 +140,10 @@ public class ResTablePrinter {
         println(prefix + "ResChunkHeader Size: ", resChunkHeader.size);
     }
 
-    private static void println(String[] array) {
+    private static void println(byte[][] array) {
         System.out.println("总共有:" + array.length);
         for (int i = 0; i < array.length; i++) {
-            println(array[i]);
+            println(new String(array[i]));
         }
     }
 

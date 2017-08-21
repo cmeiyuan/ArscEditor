@@ -69,19 +69,4 @@ public class HexUtil {
         return new String(data, "utf-8");
     }
 
-    public static byte[] getUtf16String(String u8str, int size) {
-        byte[] str = new byte[size];
-        int N = Math.min(u8str.length(), size);
-        int i = 0;
-        int j = 0;
-        for (; i < N; i++) {
-            str[j++] = (byte) u8str.charAt(i);
-            str[j++] = 0;
-        }
-        for (; j < size; j++) {
-            str[j] = 0;
-        }
-        return str;
-    }
-
 }

@@ -2,6 +2,7 @@ package com.cmy.parser;
 
 import com.cmy.parser.bean.*;
 import com.cmy.parser.bean.tabletype.*;
+import com.cmy.parser.utils.ArscUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,22 +13,22 @@ import java.util.List;
 /**
  * Created by cmy on 2017/6/7
  */
-public class ArscParser {
+public class ArscReader extends ArscEditor {
 
-    public static final int RES_STRING_POOL_TYPE = 0x0001;
-    public static final int RES_TABLE_TYPE = 0x0002;
-    public static final int RES_TABLE_PACKAGE_TYPE = 0x0200;
+    private final static short ENTRY_FLAG_COMPLEX = 0x0001;
+
+    private static final int RES_STRING_POOL_TYPE = 0x0001;
+    private static final int RES_TABLE_TYPE = 0x0002;
+    private static final int RES_TABLE_PACKAGE_TYPE = 0x0200;
     public static final int RES_TABLE_TYPE_TYPE = 0x0201;
     public static final int RES_TABLE_TYPE_SPEC_TYPE = 0x0202;
     public static final int RES_TABLE_LIBRARY_TYPE = 0x0203;
 
-    private ArscEditor arscEditor;
-
-    public ArscParser(File arscFile) throws FileNotFoundException {
-        this.arscEditor = new ArscEditor(arscFile);
+    public ArscReader(File file) throws FileNotFoundException {
+        super(file);
     }
 
-    public ResTable parse() throws IOException {
+    public ResTable read() throws IOException {
         ResTable resTable = new ResTable();
         resTable.resTableHeader = readResTableHeader();
         resTable.globalResStringPool = readResStringPool();
@@ -38,46 +39,57 @@ public class ArscParser {
     private ResTableHeader readResTableHeader() throws IOException {
         ResTableHeader resTableHeader = new ResTableHeader();
         resTableHeader.resChunkHeader = readResChunkHeader();
-        resTableHeader.packageCount = arscEditor.readInt();
+        resTableHeader.packageCount = readInt();
         return resTableHeader;
     }
 
     private ResChunkHeader readResChunkHeader() throws IOException {
         ResChunkHeader resChunkHeader = new ResChunkHeader();
-        resChunkHeader.type = arscEditor.readShort();
-        resChunkHeader.headerSize = arscEditor.readShort();
-        resChunkHeader.size = arscEditor.readInt();
+        resChunkHeader.type = readShort();
+        resChunkHeader.headerSize = readShort();
+        resChunkHeader.size = readInt();
         return resChunkHeader;
     }
 
     private ResStringPool readResStringPool() throws IOException {
-        long curPos = arscEditor.getCurPos();
+        long curPos = getCurPos();
         ResStringPool resStringPool = new ResStringPool();
-        resStringPool.resChunkHeader = readResChunkHeader();
-        resStringPool.stringCount = arscEditor.readInt();
-        resStringPool.styleCount = arscEditor.readInt();
-        resStringPool.flags = arscEditor.readInt();
-        resStringPool.stringsStart = arscEditor.readInt();
-        resStringPool.stylesStart = arscEditor.readInt();
-        resStringPool.stringOffsets = arscEditor.readIntArray(resStringPool.stringCount);
-        resStringPool.styleOffsets = arscEditor.readIntArray(resStringPool.styleCount);
-        resStringPool.strings = readStringArray(resStringPool.flags, curPos + resStringPool.stringsStart, resStringPool.stringOffsets);
-        resStringPool.styles = readStringArray(resStringPool.flags, curPos + resStringPool.stylesStart, resStringPool.styleOffsets);
-        arscEditor.seekTo(curPos + resStringPool.resChunkHeader.size);
+        resStringPool.resStringPoolHeader = new ResStringPool.ResStringPoolHeader();
+        resStringPool.resStringPoolHeader.resChunkHeader = readResChunkHeader();
+        ResStringPool.ResStringPoolHeader resStringPoolHeader = resStringPool.resStringPoolHeader;
+        resStringPoolHeader.stringCount = readInt();
+        resStringPoolHeader.styleCount = readInt();
+        resStringPoolHeader.flags = readInt();
+        resStringPoolHeader.stringsStart = readInt();
+        resStringPoolHeader.stylesStart = readInt();
+
+        // ****************************************************************
+        // 先读取整个字符串池数据，不包括ResStringPoolHeader
+        ResChunkHeader resChunkHeader = resStringPoolHeader.resChunkHeader;
+        int length = resChunkHeader.size - resChunkHeader.headerSize;
+        resStringPool.data = readBytes(length);
+        back(length);
+        // ****************************************************************
+
+        resStringPool.stringOffsets = readIntArray(resStringPoolHeader.stringCount);
+        resStringPool.styleOffsets = readIntArray(resStringPoolHeader.styleCount);
+        resStringPool.strings = readStringBytesArray(resStringPoolHeader.flags, curPos + resStringPoolHeader.stringsStart, resStringPool.stringOffsets);
+        resStringPool.styles = readStringBytesArray(resStringPoolHeader.flags, curPos + resStringPoolHeader.stylesStart, resStringPool.styleOffsets);
+        seekTo(curPos + resChunkHeader.size);
         return resStringPool;
     }
 
-    private String[] readStringArray(int flags, long startPos, int[] offsets) throws IOException {
+    private byte[][] readStringBytesArray(int flags, long startPos, int[] offsets) throws IOException {
         boolean isUTF8 = ArscUtils.isUTF8(flags);
         int length = offsets.length;
-        String[] array = new String[length];
+        byte[][] array = new byte[length][];
         for (int i = 0; i < length; i++) {
             long sPos = startPos + offsets[i];
-            arscEditor.seekTo(sPos);
-            byte b1 = arscEditor.readByte();
-            byte b2 = arscEditor.readByte();
-            byte b3 = arscEditor.readByte();
-            byte b4 = arscEditor.readByte();
+            seekTo(sPos);
+            byte b1 = readByte();
+            byte b2 = readByte();
+            byte b3 = readByte();
+            byte b4 = readByte();
             byte[] data = new byte[]{b1, b2, b3, b4};
             int[] result;
             if (isUTF8) {
@@ -85,45 +97,49 @@ public class ArscParser {
             } else {
                 result = ArscUtils.getUtf16(data, 0);
             }
-            arscEditor.seekTo(sPos + result[0]);
-            array[i] = arscEditor.readString(result[1]);
+            seekTo(sPos + result[0]);
+            array[i] = readBytes(result[1]);
         }
         return array;
     }
 
     private ResTablePackage readResTablePackage(long totalSize) throws IOException {
-        long curPos = arscEditor.getCurPos();
+        long curPos = getCurPos();
         ResTablePackage resTablePackage = new ResTablePackage();
         resTablePackage.packageHeader = readResTablePackageHeader();
-        arscEditor.seekTo(curPos + resTablePackage.packageHeader.typeStringOffset);
+        seekTo(curPos + resTablePackage.packageHeader.typeStringOffset);
         resTablePackage.typeStringPool = readResStringPool();
-        arscEditor.seekTo(curPos + resTablePackage.packageHeader.keyStringOffset);
+        seekTo(curPos + resTablePackage.packageHeader.keyStringOffset);
         resTablePackage.keyStringPool = readResStringPool();
 
         // 288 + 两个字符串池大小
         int offset = resTablePackage.packageHeader.resChunkHeader.headerSize
-                + resTablePackage.typeStringPool.resChunkHeader.size
-                + resTablePackage.keyStringPool.resChunkHeader.size;
+                + resTablePackage.typeStringPool.resStringPoolHeader.resChunkHeader.size
+                + resTablePackage.keyStringPool.resStringPoolHeader.resChunkHeader.size;
 
-        arscEditor.seekTo(curPos + offset);
-        resTablePackage.resTableDataList = readResTableDataList(totalSize);
-
+        seekTo(curPos + offset);
+        resTablePackage.resTableChunkList = readResTableChunkList(totalSize);
         return resTablePackage;
     }
 
-    private List<ResTableData> readResTableDataList(long totalSize) throws IOException {
-        List<ResTableData> list = new ArrayList<>();
-        long startPos = arscEditor.getCurPos();
+    private List<ResTableChunk> readResTableChunkList(long totalSize) throws IOException {
+        List<ResTableChunk> list = new ArrayList<>();
+        long startPos = getCurPos();
         while (startPos < totalSize) {
-            arscEditor.seekTo(startPos);
+            seekTo(startPos);
             ResChunkHeader resChunkHeader = readResChunkHeader();
             short type = resChunkHeader.type;
             if (type == RES_TABLE_LIBRARY_TYPE) {
+                //System.out.println("RES_TABLE_LIBRARY_TYPE");
                 list.add(readResTableLibrary(resChunkHeader));
             } else if (type == RES_TABLE_TYPE_SPEC_TYPE) {
+                //System.out.println("RES_TABLE_TYPE_SPEC_TYPE");
                 list.add(readResTableTypeSpec(resChunkHeader));
             } else if (type == RES_TABLE_TYPE_TYPE) {
+                //System.out.println("RES_TABLE_TYPE_TYPE");
                 list.add(readResTableType(startPos, resChunkHeader));
+            } else {
+                throw new IOException("read package error");
             }
             startPos += resChunkHeader.size;
         }
@@ -133,55 +149,61 @@ public class ArscParser {
     private ResTableLibrary readResTableLibrary(ResChunkHeader resChunkHeader) throws IOException {
         ResTableLibrary resTableLibrary = new ResTableLibrary();
         resTableLibrary.resChunkHeader = resChunkHeader;
-        resTableLibrary.count = arscEditor.readInt();
+        resTableLibrary.count = readInt();
         resTableLibrary.resTableLibraryEntries = new ArrayList<>();
         for (int i = 0; i < resTableLibrary.count; i++) {
             ResTableLibrary.ResTableLibraryEntry entry = new ResTableLibrary.ResTableLibraryEntry();
-            entry.packageId = arscEditor.readInt();
-            entry.packageName = arscEditor.readString(256);
+            entry.packageId = readInt();
+            entry.packageName = readBytes(256);
+            resTableLibrary.resTableLibraryEntries.add(entry);
         }
         return resTableLibrary;
     }
 
-    private ResTableTypeSpec readResTableTypeSpec(ResChunkHeader resChunkHeader) {
+    private ResTableTypeSpec readResTableTypeSpec(ResChunkHeader resChunkHeader) throws IOException {
         ResTableTypeSpec resTableTypeSpec = new ResTableTypeSpec();
         resTableTypeSpec.resChunkHeader = resChunkHeader;
+        resTableTypeSpec.typeId = readByte();
+        resTableTypeSpec.res0 = readByte();
+        resTableTypeSpec.res1 = readShort();
+        resTableTypeSpec.entryCount = readInt();
+        resTableTypeSpec.data = readBytes(resChunkHeader.size - resChunkHeader.headerSize);
         return resTableTypeSpec;
     }
 
     private ResTableType readResTableType(long startPos, ResChunkHeader resChunkHeader) throws IOException {
         ResTableType resTableType = new ResTableType();
         resTableType.resChunkHeader = resChunkHeader;
-        resTableType.typeId = arscEditor.readByte();
-        resTableType.res0 = arscEditor.readByte();
-        resTableType.res1 = arscEditor.readShort();
-        resTableType.entryCount = arscEditor.readInt();
-        resTableType.entryStart = arscEditor.readInt();
+        resTableType.typeId = readByte();
+        resTableType.res0 = readByte();
+        resTableType.res1 = readShort();
+        resTableType.entryCount = readInt();
+        resTableType.entryStart = readInt();
         resTableType.resTableConfig = readResTableConfig();
         //这里的头大小包含了ResTableConfig的大小
-        arscEditor.seekTo(startPos + resTableType.resChunkHeader.headerSize);
-        resTableType.resTableEntryOffsets = arscEditor.readIntArray(resTableType.entryCount);
+        seekTo(startPos + resChunkHeader.headerSize);
+        resTableType.resTableEntryOffsets = readIntArray(resTableType.entryCount);
         resTableType.resTableEntryList = readResTableEntryList(startPos + resTableType.entryStart, resTableType.resTableEntryOffsets);
         return resTableType;
     }
 
     private List<ResTableEntry> readResTableEntryList(long startPos, int[] offsets) throws IOException {
         List<ResTableEntry> list = new ArrayList<>(offsets.length);
-        for (int i = 0; i < offsets.length; i++) {
+        for (int offset : offsets) {
             //no entry
-            if (offsets[i] == -1) {
+            if (offset == -1) {
                 continue;
             }
-            arscEditor.seekTo(startPos + offsets[i]);
+            seekTo(startPos + offset);
             list.add(readResTableEntry());
         }
         return list;
     }
 
     private ResTableEntry readResTableEntry() throws IOException {
-        short size = arscEditor.readShort();
-        short flags = arscEditor.readShort();
-        int index = arscEditor.readInt();
+        short size = readShort();
+        short flags = readShort();
+        int index = readInt();
         if (flags == 0) {
             //普通类型，后面跟的是ResValue
             ResTableEntry resTableEntry = new ResTableEntry();
@@ -196,13 +218,13 @@ public class ArscParser {
             resTableMapEntry.size = size;
             resTableMapEntry.flags = flags;
             resTableMapEntry.index = index;
-            resTableMapEntry.parent = arscEditor.readInt();
+            resTableMapEntry.parent = readInt();
             // fix aapt v22 bug?
-            resTableMapEntry.count = arscEditor.readInt() & 0x00ffff;
+            resTableMapEntry.count = readInt() & 0x00ffff;
             resTableMapEntry.resTableMapList = new ArrayList<>();
             for (int i = 0; i < resTableMapEntry.count; i++) {
                 ResTableMap resTableMap = new ResTableMap();
-                resTableMap.name = arscEditor.readInt();
+                resTableMap.name = readInt();
                 resTableMap.value = readResValue();
                 resTableMapEntry.resTableMapList.add(resTableMap);
             }
@@ -212,29 +234,31 @@ public class ArscParser {
 
     private ResValue readResValue() throws IOException {
         ResValue resValue = new ResValue();
-        resValue.size = arscEditor.readShort();
-        resValue.res0 = arscEditor.readByte();
-        resValue.dataType = arscEditor.readByte();
-        resValue.data = arscEditor.readInt();
+        resValue.size = readShort();
+        resValue.res0 = readByte();
+        resValue.dataType = readByte();
+        resValue.data = readInt();
         return resValue;
     }
 
     private ResTableConfig readResTableConfig() throws IOException {
         ResTableConfig resTableConfig = new ResTableConfig();
-        resTableConfig.size = arscEditor.readInt();
+        resTableConfig.size = readInt();
+        back(4);
+        resTableConfig.data = readBytes(resTableConfig.size);
         return resTableConfig;
     }
 
     private ResTablePackageHeader readResTablePackageHeader() throws IOException {
         ResTablePackageHeader resTablePackageHeader = new ResTablePackageHeader();
         resTablePackageHeader.resChunkHeader = readResChunkHeader();
-        resTablePackageHeader.packageId = arscEditor.readInt();
-        resTablePackageHeader.packageName = arscEditor.readString(256);
-        resTablePackageHeader.typeStringOffset = arscEditor.readInt();
-        resTablePackageHeader.lastPublicType = arscEditor.readInt();
-        resTablePackageHeader.keyStringOffset = arscEditor.readInt();
-        resTablePackageHeader.lastPublicKey = arscEditor.readInt();
-        resTablePackageHeader.typeIdOffset = arscEditor.readInt();
+        resTablePackageHeader.packageId = readInt();
+        resTablePackageHeader.packageName = readBytes(256);
+        resTablePackageHeader.typeStringOffset = readInt();
+        resTablePackageHeader.lastPublicType = readInt();
+        resTablePackageHeader.keyStringOffset = readInt();
+        resTablePackageHeader.lastPublicKey = readInt();
+        resTablePackageHeader.typeIdOffset = readInt();
         return resTablePackageHeader;
     }
 

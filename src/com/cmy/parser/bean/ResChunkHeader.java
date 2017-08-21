@@ -2,6 +2,9 @@ package com.cmy.parser.bean;
 
 /**
  * Created by cmy on 2017/6/6
+ *
+ * size 8
+ *
  */
 public class ResChunkHeader {
     // Type identifier for this chunk.  The meaning of this value depends

@@ -1,16 +1,17 @@
 package com.cmy.parser.bean.tabletype;
 
 import com.cmy.parser.bean.ResTableConfig;
-import com.cmy.parser.bean.ResTableData;
+import com.cmy.parser.bean.ResTableChunk;
 
 import java.util.List;
 
 /**
  * Created by cmy on 2017/6/7
  */
-public class ResTableType extends ResTableData {
-    // The tabletype identifier this chunk is holding.  Type IDs start
-    // at 1 (corresponding to the value of the tabletype bits in a
+public class ResTableType extends ResTableChunk {
+
+    // The tableType identifier this chunk is holding.  Type IDs start
+    // at 1 (corresponding to the value of the tableType bits in a
     // resource identifier).  0 is invalid.
     public byte typeId;
     // 保留字段，一定为0
@@ -28,4 +29,5 @@ public class ResTableType extends ResTableData {
     public int[] resTableEntryOffsets;
 
     public List<ResTableEntry> resTableEntryList;
+
 }

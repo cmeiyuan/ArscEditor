@@ -17,53 +17,41 @@ public class ArscEditor {
         randomAccessFile = new RandomAccessFile(file, "rw");
     }
 
-    public final void seekTo(long pos) throws IOException {
+    final void seekTo(long pos) throws IOException {
         randomAccessFile.seek(pos);
     }
 
-    public final void back(int n) throws IOException {
+    final void back(int n) throws IOException {
         seekTo(getCurPos() - n);
     }
 
-    public final long getCurPos() throws IOException {
+    final long getCurPos() throws IOException {
         return randomAccessFile.getFilePointer();
     }
 
-    public final boolean readBoolean() throws IOException {
-        return randomAccessFile.readBoolean();
-    }
-
-    public final byte readByte() throws IOException {
+    final byte readByte() throws IOException {
         return randomAccessFile.readByte();
     }
 
-    public final int readByteInt() throws IOException {
-        byte b = readByte();
-        if (b < 0) {
-            return b + 256;
-        }
-        return b;
-    }
-
-    public final byte[] readBytes(int n) throws IOException {
+    final byte[] readBytes(int n) throws IOException {
         byte[] b = new byte[n];
         randomAccessFile.read(b);
         return b;
     }
 
-    public final short readShort() throws IOException {
+    final short readShort() throws IOException {
         ByteBuffer bb = ByteBuffer.wrap(readBytes(2));
         bb.order(ByteOrder.LITTLE_ENDIAN);
         return bb.getShort();
     }
 
-    public final int readInt() throws IOException {
+    final int readInt() throws IOException {
         ByteBuffer bb = ByteBuffer.wrap(readBytes(4));
         bb.order(ByteOrder.LITTLE_ENDIAN);
         return bb.getInt();
     }
 
-    public final int[] readIntArray(int length) throws IOException {
+    final int[] readIntArray(int length) throws IOException {
         int[] array = new int[length];
         for (int i = 0; i < length; i++) {
             array[i] = readInt();
@@ -71,20 +59,30 @@ public class ArscEditor {
         return array;
     }
 
-    public final String readString(int length) throws IOException {
-        return new String(readBytes(length), "utf-8");
+    final void writeByte(byte v) throws IOException {
+        byte[] buffer = new byte[1];
+        buffer[0] = (byte) (v & 0xFF);
+        writeBytes(buffer);
     }
 
-    public final void writeByte(int v) throws IOException {
-        randomAccessFile.writeByte(v);
+    final void writeShort(short v) throws IOException {
+        byte[] buffer = new byte[2];
+        buffer[1] = (byte) ((v >> 8) & 0xFF);
+        buffer[0] = (byte) (v & 0xFF);
+        writeBytes(buffer);
     }
 
-    public final void writeShort(int v) throws IOException {
-        randomAccessFile.writeShort(v);
+    final void writeInt(int v) throws IOException {
+        byte[] buffer = new byte[4];
+        buffer[3] = (byte) ((v >> 24) & 0xFF);
+        buffer[2] = (byte) ((v >> 16) & 0xFF);
+        buffer[1] = (byte) ((v >> 8) & 0xFF);
+        buffer[0] = (byte) (v & 0xFF);
+        writeBytes(buffer);
     }
 
-    public final void writeInt(int v) throws IOException {
-        randomAccessFile.writeInt(v);
+    final void writeBytes(byte[] v) throws IOException {
+        randomAccessFile.write(v);
     }
 
 }

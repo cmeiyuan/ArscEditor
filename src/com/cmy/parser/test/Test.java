@@ -1,4 +1,4 @@
-package com.cmy.parser;
+package com.cmy.parser.test;
 
 /**
  * Created by cmy on 2017/7/5

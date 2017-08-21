@@ -13,5 +13,5 @@ public class ResTablePackage {
     //资源项关键字符串池
     public ResStringPool keyStringPool;
     //类型规范和资源配置列表
-    public List<ResTableData> resTableDataList;
+    public List<ResTableChunk> resTableChunkList;
 }
