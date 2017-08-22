@@ -48,7 +48,7 @@ public class Main {
         ResTablePrinter printer = new ResTablePrinter(resTable);
         printer.printResTableHeader();
         printer.printGlobalResStringPool();
-        printer.printResTablePackage();
+        printer.printResTablePackage(false);
     }
 
     private static void check(String path1, String path2) throws Exception {

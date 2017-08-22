@@ -1,5 +1,7 @@
 package com.cmy.parser.test;
 
+import com.cmy.parser.bean.tabletype.ResTableEntry;
+
 /**
  * Created by cmy on 2017/7/5
  */
@@ -9,7 +11,8 @@ public class Test {
         // FF DC FF DC
         //fffdc
         //fffff
-        print(0x8888);
+        //print(0x8888);
+        System.out.println(2 & ResTableEntry.FLAG_COMPLEX);
     }
 
     public static void print(int n) {

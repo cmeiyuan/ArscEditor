@@ -4,6 +4,7 @@ import com.cmy.parser.bean.*;
 import com.cmy.parser.bean.tabletype.*;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Created by cmy on 2017/6/7
@@ -26,7 +27,7 @@ public class ResTablePrinter {
         printResStringPool(resTable.globalResStringPool);
     }
 
-    public void printResTablePackage() {
+    public void printResTablePackage(boolean printList) {
         ResStringPool globalStringPool = resTable.globalResStringPool;
         ResTablePackage resTablePackage = resTable.resTablePackage;
 
@@ -42,22 +43,40 @@ public class ResTablePrinter {
         printResStringPool(resTablePackage.typeStringPool);
         printResStringPool(resTablePackage.keyStringPool);
 
-        List<ResTableChunk> list = resTablePackage.resTableChunkList;
-        for (ResTableChunk resTableData : list) {
-            short type = resTableData.resChunkHeader.type;
-            switch (type) {
-                case ArscReader.RES_TABLE_LIBRARY_TYPE:
-                    //println("RES_TABLE_LIBRARY_TYPE");
-                    break;
-                case ArscReader.RES_TABLE_TYPE_SPEC_TYPE:
-                    //println("RES_TABLE_TYPE_SPEC_TYPE");
-                    break;
-                case ArscReader.RES_TABLE_TYPE_TYPE:
-                    //println("RES_TABLE_TYPE_TYPE");
-                    println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
-                    break;
+        if (printList) {
+            List<ResTableChunk> list = resTablePackage.resTableChunkList;
+            for (ResTableChunk resTableData : list) {
+                short type = resTableData.resChunkHeader.type;
+                switch (type) {
+                    case ResTable.RES_TABLE_LIBRARY_TYPE:
+                        //println("RES_TABLE_LIBRARY_TYPE");
+                        println((ResTableLibrary) resTableData);
+                        break;
+                    case ResTable.RES_TABLE_TYPE_SPEC_TYPE:
+                        //println("RES_TABLE_TYPE_SPEC_TYPE");
+                        println((ResTableTypeSpec) resTableData);
+                        break;
+                    case ResTable.RES_TABLE_TYPE_TYPE:
+                        //println("RES_TABLE_TYPE_TYPE");
+                        println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
+                        break;
+                }
             }
         }
+    }
+
+    private static void println(ResTableLibrary resTableLibrary) {
+        System.out.println("========ResTableLibrary========");
+        if (resTableLibrary.resTableLibraryEntries != null) {
+            resTableLibrary.resTableLibraryEntries.forEach(resTableLibraryEntry -> {
+                System.out.println("packageId:" + resTableLibraryEntry.packageId);
+                System.out.println("packageName:" + new String(resTableLibraryEntry.packageName));
+            });
+        }
+    }
+
+    private static void println(ResTableTypeSpec resTableTypeSpec) {
+
     }
 
     public static void printResStringPool(ResStringPool resStringPool) {
@@ -83,7 +102,7 @@ public class ResTablePrinter {
         List<ResTableEntry> list = resTableType.resTableEntryList;
         for (int i = 0; i < list.size(); i++) {
             ResTableEntry entry = list.get(i);
-            if (entry.flags == 0) {
+            if ((entry.flags & ResTableEntry.FLAG_COMPLEX) == 0) {
                 println("------------------------------------------");
                 println("普通类型:");
                 println("ResTableType TypeId: ", resTableType.typeId);
@@ -130,7 +149,7 @@ public class ResTablePrinter {
         println("ResValue dataType: ", resValue.dataType);
         println("ResValue data: ", resValue.data);
         if (resValue.dataType == 3) {
-            println(String.format("%s=%s", key, globalStringPool.strings[resValue.data]));
+            println(String.format("%s=%s", key, new String(globalStringPool.strings[resValue.data])));
         }
     }
 
@@ -153,15 +172,6 @@ public class ResTablePrinter {
 
     private static void println(CharSequence charSequence, int value) {
         System.out.println(charSequence + "0x" + Integer.toHexString(value));
-    }
-
-    public static String getResourceId(int id) {
-        String str = Integer.toHexString(id);
-        if (str.length() == 7) {
-            return "0x0" + str;
-        } else {
-            return "0x" + str;
-        }
     }
 
 }

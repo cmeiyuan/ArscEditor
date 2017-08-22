@@ -15,15 +15,6 @@ import java.util.List;
  */
 public class ArscReader extends ArscEditor {
 
-    private final static short ENTRY_FLAG_COMPLEX = 0x0001;
-
-    private static final int RES_STRING_POOL_TYPE = 0x0001;
-    private static final int RES_TABLE_TYPE = 0x0002;
-    private static final int RES_TABLE_PACKAGE_TYPE = 0x0200;
-    public static final int RES_TABLE_TYPE_TYPE = 0x0201;
-    public static final int RES_TABLE_TYPE_SPEC_TYPE = 0x0202;
-    public static final int RES_TABLE_LIBRARY_TYPE = 0x0203;
-
     public ArscReader(File file) throws FileNotFoundException {
         super(file);
     }
@@ -129,13 +120,13 @@ public class ArscReader extends ArscEditor {
             seekTo(startPos);
             ResChunkHeader resChunkHeader = readResChunkHeader();
             short type = resChunkHeader.type;
-            if (type == RES_TABLE_LIBRARY_TYPE) {
+            if (type == ResTable.RES_TABLE_LIBRARY_TYPE) {
                 //System.out.println("RES_TABLE_LIBRARY_TYPE");
                 list.add(readResTableLibrary(resChunkHeader));
-            } else if (type == RES_TABLE_TYPE_SPEC_TYPE) {
+            } else if (type == ResTable.RES_TABLE_TYPE_SPEC_TYPE) {
                 //System.out.println("RES_TABLE_TYPE_SPEC_TYPE");
                 list.add(readResTableTypeSpec(resChunkHeader));
-            } else if (type == RES_TABLE_TYPE_TYPE) {
+            } else if (type == ResTable.RES_TABLE_TYPE_TYPE) {
                 //System.out.println("RES_TABLE_TYPE_TYPE");
                 list.add(readResTableType(startPos, resChunkHeader));
             } else {
@@ -204,7 +195,7 @@ public class ArscReader extends ArscEditor {
         short size = readShort();
         short flags = readShort();
         int index = readInt();
-        if (flags == 0) {
+        if ((flags & ResTableEntry.FLAG_COMPLEX) == 0) {
             //普通类型，后面跟的是ResValue
             ResTableEntry resTableEntry = new ResTableEntry();
             resTableEntry.size = size;
