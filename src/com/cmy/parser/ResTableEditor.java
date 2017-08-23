@@ -50,8 +50,10 @@ public class ResTableEditor {
     }
 
     public void modifyLibraryChunk(Map<Integer, String> ppMap) {
+        int originalLibraryChunkSize = 0;
         ResTableChunk resTableChunk = resTable.resTablePackage.resTableChunkList.get(0);
         if (resTableChunk instanceof ResTableLibrary) {
+            originalLibraryChunkSize = ((ResTableLibrary) resTableChunk).resChunkHeader.size;
             resTable.resTablePackage.resTableChunkList.remove(0);
         }
 
@@ -76,6 +78,11 @@ public class ResTableEditor {
             resTableLibrary.resTableLibraryEntries.add(entry);
         }
         resTable.resTablePackage.resTableChunkList.add(0, resTableLibrary);
+        int incrementLength = (resTableLibrary.resChunkHeader.size - originalLibraryChunkSize);
+        // 修改文件总长度
+        resTable.resTableHeader.resChunkHeader.size += incrementLength;
+        // 修改包长度
+        resTable.resTablePackage.packageHeader.resChunkHeader.size += incrementLength;
     }
 
     private int checkAndGetNewPP(int value, int pp) {

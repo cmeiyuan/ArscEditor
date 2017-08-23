@@ -58,7 +58,7 @@ public class Main {
         compare(path1, path2, -1);
     }
 
-    private static void compare(String path1, String path2, int length) throws Exception {
+    public static void compare(String path1, String path2, int length) throws Exception {
         byte[] data1 = FileUtils.readBytes(path1);
         byte[] data2 = FileUtils.readBytes(path2);
         boolean matchAll = true;

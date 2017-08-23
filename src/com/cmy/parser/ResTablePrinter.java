@@ -54,11 +54,11 @@ public class ResTablePrinter {
                         break;
                     case ResTable.RES_TABLE_TYPE_SPEC_TYPE:
                         //println("RES_TABLE_TYPE_SPEC_TYPE");
-                        println((ResTableTypeSpec) resTableData);
+                        //println((ResTableTypeSpec) resTableData);
                         break;
                     case ResTable.RES_TABLE_TYPE_TYPE:
                         //println("RES_TABLE_TYPE_TYPE");
-                        println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
+                        //println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
                         break;
                 }
             }

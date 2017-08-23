@@ -23,6 +23,7 @@ public class ArscReader extends ArscEditor {
         ResTable resTable = new ResTable();
         resTable.resTableHeader = readResTableHeader();
         resTable.globalResStringPool = readResStringPool();
+        System.out.println("curPos:" + getCurPos());
         resTable.resTablePackage = readResTablePackage(resTable.resTableHeader.resChunkHeader.size);
         return resTable;
     }
