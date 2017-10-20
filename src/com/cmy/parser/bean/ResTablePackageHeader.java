@@ -16,12 +16,14 @@ public class ResTablePackageHeader extends ResTableChunk {
     // another base package (overriding specific values in it).
     public int typeStringOffset;
     // Last index into typeStrings that is for public use by others.
+    // 目前被设置为资源类型字符串池的大小，好像没撒用啊...
     public int lastPublicType;
     // Offset to a ResStringPool_header defining the resource
     // key symbol table.  If zero, this package is inheriting from
     // another base package (overriding specific values in it).
     public int keyStringOffset;
     // Last index into keyStrings that is for public use by others.
+    // 目前被设置为资源项名称字符串池的大小，好像没撒用啊...
     public int lastPublicKey;
 
     public int typeIdOffset;

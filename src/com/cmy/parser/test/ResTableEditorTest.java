@@ -16,7 +16,9 @@ import java.util.Map;
 public class ResTableEditorTest {
 
     public static void main(String[] args) throws Exception {
-        String path = "/Users/cmeiyuan/AndroidStudioProjects/HelloPlugin/module2/plugin/intermediates/res/ap_unzip/resources.arsc";
+        String path = "/Users/cmeiyuan/AndroidStudioProjects/repo/ehuodiOwnerAndroid/branches/dev_cmy_20171018/module/wallet_lib/plugin/intermediates/res/ap_unzip/resources.arsc";
+        // path = "/Users/cmeiyuan/AndroidStudioProjects/repo/ehuodiOwnerAndroid/branches/dev_cmy_20171018/module/common/plugin/intermediates/res/ap_unzip/resources.arsc";
+        //path = "/Users/cmeiyuan/Documents/androidjar/android/resources.arsc";
 //        ResTableEditor resTableEditor = new ResTableEditor(path);
 //        resTableEditor.modifyPackageId(0x66);
 //        Map<Integer, String> map = new HashMap<>();
@@ -32,8 +34,8 @@ public class ResTableEditorTest {
 
     private static void print(ResTable resTable) {
         ResTablePrinter printer = new ResTablePrinter(resTable);
-        printer.printResTableHeader();
-        printer.printGlobalResStringPool();
+        //printer.printResTableHeader();
+        //printer.printGlobalResStringPool();
         printer.printResTablePackage(true);
     }
 

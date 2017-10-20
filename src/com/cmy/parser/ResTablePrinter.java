@@ -54,11 +54,11 @@ public class ResTablePrinter {
                         break;
                     case ResTable.RES_TABLE_TYPE_SPEC_TYPE:
                         //println("RES_TABLE_TYPE_SPEC_TYPE");
-                        //println((ResTableTypeSpec) resTableData);
+                        println((ResTableTypeSpec) resTableData);
                         break;
                     case ResTable.RES_TABLE_TYPE_TYPE:
                         //println("RES_TABLE_TYPE_TYPE");
-                        //println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
+                        println(resTablePackage.packageHeader.packageId, globalStringPool, resTablePackage.keyStringPool, (ResTableType) resTableData);
                         break;
                 }
             }
@@ -76,7 +76,7 @@ public class ResTablePrinter {
     }
 
     private static void println(ResTableTypeSpec resTableTypeSpec) {
-
+        // 暂时没写这个打印
     }
 
     public static void printResStringPool(ResStringPool resStringPool) {
@@ -102,6 +102,13 @@ public class ResTablePrinter {
         List<ResTableEntry> list = resTableType.resTableEntryList;
         for (int i = 0; i < list.size(); i++) {
             ResTableEntry entry = list.get(i);
+
+//            if (entry.flags == 0 || entry.flags == 1) {
+//                continue;
+//            }
+
+            System.out.println("打印flags:" + entry.flags);
+
             if ((entry.flags & ResTableEntry.FLAG_COMPLEX) == 0) {
                 println("------------------------------------------");
                 println("普通类型:");
